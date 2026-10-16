@@ -16,7 +16,7 @@ export function MapSurface({ ref, onEvent, style }: { ref: React.Ref<MapSurfaceH
       ref={web}
       style={[{ backgroundColor: '#eef2ee' }, style]}
       originWhitelist={['*']}
-      source={{ html: MAP_HTML, baseUrl: 'https://bvr-rideshare.local/' }}
+      source={{ html: MAP_HTML, baseUrl: 'https://bvrrideshare.app/' }}
       onMessage={(e) => {
         try {
           onEvent(JSON.parse(e.nativeEvent.data) as MapEvent);

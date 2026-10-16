@@ -18,7 +18,7 @@ export type MapEvent = { type: 'ready' } | { type: 'area'; name: string };
 
 /**
  * Self-contained Leaflet page rendered by a WebView (native) or an iframe
- * (web). Tiles come from CARTO's OpenStreetMap basemap, so no API key is
+ * (web). Tiles come from OpenStreetMap (Esri as a fallback), so no API key is
  * needed while the app is in development; module 2 can swap in a keyed provider.
  */
 export const MAP_HTML = `<!doctype html>
@@ -40,7 +40,15 @@ html,body,#map{margin:0;height:100%;width:100%;background:#eef2ee}
   var BLUE='${colors.primary}', RED='${colors.danger}';
   var map=L.map('map',{zoomControl:false,attributionControl:true}).setView([${SERVICE_REGION.latitude},${SERVICE_REGION.longitude}],10);
   map.attributionControl.setPrefix(false);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19,attribution:'&copy; OpenStreetMap &copy; CARTO'}).addTo(map);
+  // OpenStreetMap's own tiles need no key. If they fail to load (blocked or
+  // offline), fall back to Esri's keyless street basemap.
+  var tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+  var failures=0;
+  tiles.on('tileerror',function(){
+    if(++failures!==3) return;
+    map.removeLayer(tiles);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles &copy; Esri'}).addTo(map);
+  });
   var layer=L.layerGroup().addTo(map), car=null, me=null, state=null;
 
   function send(msg){
