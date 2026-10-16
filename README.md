@@ -1,6 +1,6 @@
 # BVR Rideshare
 
-Cross-platform (iOS, Android, web) ride booking app for BVR Rideshare, Robert Burns' single-driver service covering Newcastle, Medowie, Maitland and Nelson Bay (NSW). Built with Expo SDK 58, Expo Router and TypeScript.
+Cross-platform (iOS, Android, web) ride booking app for BVR Rideshare, Robert Burns' single-driver service covering Newcastle, Medowie, Maitland and Nelson Bay (NSW). Built with Expo SDK 57, Expo Router and TypeScript.
 
 ## Delivery plan
 
@@ -14,7 +14,7 @@ Cross-platform (iOS, Android, web) ride booking app for BVR Rideshare, Robert Bu
 
 ```bash
 npm install
-npx expo start        # scan the QR code with Expo Go on your phone
+npx expo start        # scan the QR code with Expo Go (store version, SDK 57)
 npx expo start --web  # or open in a browser
 ```
 
