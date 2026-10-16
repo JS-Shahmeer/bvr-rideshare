@@ -6,7 +6,7 @@ import { RouteStops } from '@/components/Booking';
 import { Button } from '@/components/Button';
 import { Field, SelectField } from '@/components/Fields';
 import { Icon } from '@/components/Icon';
-import { MapIllustration } from '@/components/MapIllustration';
+import { LiveMap } from '@/components/LiveMap';
 import { Card, Divider, EmptyState, Pill, StatusPill } from '@/components/Primitives';
 import { BackHeader, Screen } from '@/components/Screen';
 import { Sheet } from '@/components/Sheet';
@@ -78,7 +78,7 @@ export default function DriverNavigate() {
         </View>
       </View>
       <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
-        <MapIllustration height={260} />
+        <LiveMap height={300} label={STAGE[b.status]} pickup={b.pickup} destination={b.destination} status={b.status} />
       </View>
       <View style={{ paddingHorizontal: PAD_X }}>
         <Card>

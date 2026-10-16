@@ -5,7 +5,7 @@ import { StyleSheet, Text as RNText, View } from 'react-native';
 import { RouteStops } from '@/components/Booking';
 import { Button } from '@/components/Button';
 import { Icon } from '@/components/Icon';
-import { MapIllustration } from '@/components/MapIllustration';
+import { LiveMap } from '@/components/LiveMap';
 import { Card, Divider, EmptyState, StatusPill } from '@/components/Primitives';
 import { BackHeader, Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
@@ -79,9 +79,9 @@ export default function RideStatus() {
         <View style={{ height: 16 }} />
       )}
 
-      <MapIllustration height={230} />
+      <LiveMap height={260} label={open ? 'Live trip' : 'Trip route'} pickup={b.pickup} destination={b.destination} status={b.status} />
       <Text variant="tiny" style={{ marginTop: 7, marginBottom: 16 }}>
-        Live driver location arrives with the backend module.
+        Driver position is simulated until live GPS arrives with the backend module.
       </Text>
 
       <Card>

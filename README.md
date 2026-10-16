@@ -64,7 +64,8 @@ npm test
 
 - Mock sign-in and accounts → Supabase Auth
 - Route distances between the four towns → routing API with real addresses
-- Illustrated map → live map with driver location
+- Simulated driver position on the map (`src/lib/geo.ts`) → driver's live GPS; curved route line → routing provider polyline
+- Android release builds need a Google Maps API key (`react-native-maps` plugin in app.json); Expo Go works without one
 - Online payment option → Stripe (cards, Apple Pay, Google Pay)
 - In-app notifications → push notifications
 

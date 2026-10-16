@@ -4,11 +4,12 @@ import { StyleSheet, Text as RNText, View } from 'react-native';
 import { Button } from '@/components/Button';
 import { DateTimeField, Field, LocationField } from '@/components/Fields';
 import { Icon } from '@/components/Icon';
-import { MapIllustration } from '@/components/MapIllustration';
+import { LiveMap } from '@/components/LiveMap';
 import { Card, Pill, Segmented, StatusPill, TitleRow } from '@/components/Primitives';
 import { Hero, RiderHeader, Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { useToast } from '@/components/Toast';
+import { routeMetrics } from '@/lib/fare';
 import { OPEN_STATUSES } from '@/lib/format';
 import { useStore } from '@/state/AppStore';
 import { colors, fonts } from '@/theme';
@@ -45,15 +46,25 @@ export default function RiderHome() {
         </Card>
       ) : null}
 
-      <MapIllustration
-        height={220}
+      <LiveMap
+        height={260}
+        label="Your route"
+        pickup={draft.pickup}
+        destination={draft.destination}
+        showAreas
+        locate
+        onAreaPress={(destination) => updateDraft({ destination })}
         footer={
           <>
             <Icon name="navigation" size={15} color={colors.ink} />
             <RNText style={styles.footerText} numberOfLines={1}>
-              Newcastle & surrounds
+              {draft.pickup === draft.destination ? 'Tap a town to set your destination' : `${draft.pickup} → ${draft.destination}`}
             </RNText>
-            <RNText style={styles.footerAccent}>4 service areas</RNText>
+            {draft.pickup !== draft.destination ? (
+              <RNText style={styles.footerAccent}>
+                {routeMetrics(draft.pickup, draft.destination).km} km · {routeMetrics(draft.pickup, draft.destination).min} min
+              </RNText>
+            ) : null}
           </>
         }
       />
