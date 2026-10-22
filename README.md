@@ -25,6 +25,8 @@ Demo logins (also offered on the sign-in screen):
 | Rider | rider@bvr.demo | BVRdemo123 |
 | Driver (Robert) | robert@bvr.demo | BVRdemo123 |
 
+**Client demo:** on the sign-in screen tap **Client demo: open any screen** (also in the rider Account tab and driver Settings). It opens the app at any screen or ride stage for either side, and on a ride screen the demo panel moves the trip between stages or plays it start to finish.
+
 One device can be signed in as both. Use **Switch to driver view** (rider Account tab) or **Switch to rider view** (driver Settings) to watch a booking move between the two sides.
 
 ## What's in module 1

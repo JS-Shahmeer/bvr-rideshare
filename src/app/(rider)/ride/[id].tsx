@@ -6,6 +6,7 @@ import { RouteStops } from '@/components/Booking';
 import { Button } from '@/components/Button';
 import { Icon } from '@/components/Icon';
 import { LiveMap } from '@/components/LiveMap';
+import { DemoControls } from '@/components/DemoControls';
 import { Card, Divider, EmptyState, StatusPill } from '@/components/Primitives';
 import { BackHeader, Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
@@ -109,6 +110,8 @@ export default function RideStatus() {
       ) : (
         <Button style={{ marginTop: 13 }} icon="receipt" label={b.status === 'completed' ? 'Receipt & rating' : 'Trip details'} onPress={() => setSheet('receipt')} />
       )}
+
+      <DemoControls booking={b} />
 
       <CancelSheet booking={b} visible={sheet === 'cancel'} onClose={() => setSheet(null)} onCancelled={() => router.navigate('/trips')} />
       <ChangeDestinationSheet booking={b} visible={sheet === 'change'} onClose={() => setSheet(null)} />

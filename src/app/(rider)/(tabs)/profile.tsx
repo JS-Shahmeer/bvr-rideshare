@@ -61,6 +61,7 @@ export default function Account() {
         <MenuRow icon="history" label="My ride history" onPress={() => router.navigate('/trips')} />
         <MenuRow icon="bell" label="Notifications" onPress={() => router.navigate('/notifications')} />
         <MenuRow icon="shield" label="Fees & cancellation info" onPress={() => setPolicy(true)} />
+        <MenuRow icon="eye" label="Client demo scenarios" onPress={() => router.push('/demo')} />
         <MenuRow
           icon="car"
           label="Switch to driver view"

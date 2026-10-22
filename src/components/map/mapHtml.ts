@@ -1,7 +1,25 @@
 import { SERVICE_REGION } from '@/lib/geo';
 import { colors } from '@/theme';
 
+import { BASEMAP } from './basemap';
 import { LEAFLET_CSS, LEAFLET_JS } from './leaflet';
+
+/** Optional raster tiles (e.g. a MapTiler or Mapbox URL with its key). Unset = offline basemap only. */
+const TILE_URL = process.env.EXPO_PUBLIC_MAP_TILE_URL ?? '';
+
+/** Extra place names drawn on the offline basemap: [name, lat, lng, kind]. */
+const PLACES: [string, number, number, 'town' | 'water'][] = [
+  ['Raymond Terrace', -32.761, 151.744, 'town'],
+  ['Williamtown', -32.8, 151.84, 'town'],
+  ['Kurri Kurri', -32.819, 151.479, 'town'],
+  ['Cessnock', -32.834, 151.356, 'town'],
+  ['Stockton', -32.909, 151.785, 'town'],
+  ['Anna Bay', -32.779, 152.085, 'town'],
+  ['Tea Gardens', -32.664, 152.157, 'town'],
+  ['Port Stephens', -32.705, 152.02, 'water'],
+  ['Tasman Sea', -32.98, 152.2, 'water'],
+  ['Lake Macquarie', -33.07, 151.6, 'water'],
+];
 
 /** Everything the page draws. Sent in from React whenever it changes. */
 export type MapState = {
@@ -18,15 +36,18 @@ export type MapEvent = { type: 'ready' } | { type: 'area'; name: string };
 
 /**
  * Self-contained Leaflet page rendered by a WebView (native) or an iframe
- * (web). Tiles come from OpenStreetMap (Esri as a fallback), so no API key is
- * needed while the app is in development; module 2 can swap in a keyed provider.
+ * (web). It draws an offline basemap of the service region, so it works with no
+ * tile server or API key. Set EXPO_PUBLIC_MAP_TILE_URL to layer street tiles on top.
  */
 export const MAP_HTML = `<!doctype html>
 <html><head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <style>${LEAFLET_CSS}
-html,body,#map{margin:0;height:100%;width:100%;background:#eef2ee}
+html,body,#map{margin:0;height:100%;width:100%;background:#B5DCEE}
+.leaflet-container{background:#B5DCEE}
+.place{font:600 10px -apple-system,Roboto,sans-serif;color:#7C8A93;text-align:center;white-space:nowrap;text-shadow:0 0 3px #fff,0 0 3px #fff}
+.place-water{font-style:italic;color:#4E8FB4;text-shadow:none;letter-spacing:.4px}
 .leaflet-control-attribution{font:9px/1.3 -apple-system,Roboto,sans-serif;background:rgba(255,255,255,.75)!important}
 .car{width:32px;height:32px;border-radius:16px;background:${colors.ink};border:3px solid #fff;box-sizing:border-box;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(23,44,66,.35)}
 .pin{width:28px;height:36px}
@@ -38,17 +59,29 @@ html,body,#map{margin:0;height:100%;width:100%;background:#eef2ee}
 <script>
 (function(){
   var BLUE='${colors.primary}', RED='${colors.danger}';
-  var map=L.map('map',{zoomControl:false,attributionControl:true}).setView([${SERVICE_REGION.latitude},${SERVICE_REGION.longitude}],10);
+  var map=L.map('map',{zoomControl:false,attributionControl:true,minZoom:9,maxZoom:14,maxBounds:[[-33.4,150.9],[-32.1,152.8]],maxBoundsViscosity:0.8}).setView([${SERVICE_REGION.latitude},${SERVICE_REGION.longitude}],10);
   map.attributionControl.setPrefix(false);
-  // OpenStreetMap's own tiles need no key. If they fail to load (blocked or
-  // offline), fall back to Esri's keyless street basemap.
-  var tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
-  var failures=0;
-  tiles.on('tileerror',function(){
-    if(++failures!==3) return;
-    map.removeLayer(tiles);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles &copy; Esri'}).addTo(map);
+  // Offline basemap: always drawn, needs no network or key.
+  var B=${JSON.stringify(BASEMAP)}, P=${JSON.stringify(PLACES)};
+  var base=L.layerGroup().addTo(map);
+  L.polygon(B.land,{stroke:false,fillColor:'#EEF2EA',fillOpacity:1,interactive:false}).addTo(base);
+  L.polygon(B.urban,{stroke:false,fillColor:'#E2E6DE',fillOpacity:1,interactive:false}).addTo(base);
+  L.polyline(B.rivers,{color:'#A9D3E8',weight:3,opacity:1,interactive:false}).addTo(base);
+  L.polyline(B.rail,{color:'#B9C1C7',weight:2,dashArray:'5 5',opacity:1,interactive:false}).addTo(base);
+  L.polyline(B.roads,{color:'#E7C48E',weight:6,opacity:1,lineCap:'round',interactive:false}).addTo(base);
+  L.polyline(B.roads,{color:'#FFF6E4',weight:3,opacity:1,lineCap:'round',interactive:false}).addTo(base);
+  P.forEach(function(p){
+    L.marker([p[1],p[2]],{interactive:false,icon:L.divIcon({className:'',iconSize:[120,14],iconAnchor:[60,7],html:'<div class="place place-'+p[3]+'">'+p[0]+'</div>'})}).addTo(base);
   });
+  // Optional street tiles on top, when a tile URL (with its key) is configured.
+  var TILE_URL=${JSON.stringify(TILE_URL)};
+  if(TILE_URL){
+    var tiles=L.tileLayer(TILE_URL,{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+    var failures=0;
+    tiles.on('tileerror',function(){ if(++failures===3) map.removeLayer(tiles); });
+  } else {
+    map.attributionControl.addAttribution('Natural Earth');
+  }
   var layer=L.layerGroup().addTo(map), car=null, me=null, state=null;
 
   function send(msg){
@@ -71,7 +104,7 @@ html,body,#map{margin:0;height:100%;width:100%;background:#eef2ee}
   }
   function frame(){
     var p=points();
-    if(p.length>1) map.fitBounds(p,{paddingTopLeft:[40,64],paddingBottomRight:[40,72],maxZoom:14});
+    if(p.length>1) map.fitBounds(p,{paddingTopLeft:[40,64],paddingBottomRight:[40,72],maxZoom:12});
     else if(p.length===1) map.setView(p[0],12);
   }
   function apply(s,fit){

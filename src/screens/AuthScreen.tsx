@@ -201,6 +201,16 @@ export function AuthScreen({ mode, role: initialRole }: { mode: 'signin' | 'sign
                   {DEMO_ACCOUNTS[role].email} · Password: {DEMO_ACCOUNTS[role].password}
                 </Text>
               </Pressable>
+              <Pressable onPress={() => router.push('/demo')} style={[styles.demo, { marginTop: 10 }]} accessibilityRole="button">
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Icon name="eye" size={16} color={colors.primary} />
+                  <RNText style={[styles.link, { flex: 1 }]}>Client demo: open any screen</RNText>
+                  <Icon name="chevron" size={16} color={colors.primary} />
+                </View>
+                <Text variant="small" style={{ marginTop: 6 }}>
+                  Jump straight to every ride stage for rider and driver
+                </Text>
+              </Pressable>
             </>
           ) : null}
 

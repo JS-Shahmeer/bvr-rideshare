@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { BookingStatus, ServiceArea } from '@/data/types';
 import { SERVICE_AREAS } from '@/lib/fare';
-import { AREA_COORDS, bearing, driverPosition, routePath, type LatLng } from '@/lib/geo';
+import { AREA_COORDS, bearing, driverPosition, routeBetween, type LatLng } from '@/lib/geo';
 import { colors, fonts, shadows } from '@/theme';
 
 import { Icon } from './Icon';
@@ -47,14 +47,15 @@ export function LiveMap({ height = 220, pickup, destination, status, showAreas, 
   }, [moving, status]);
 
   const state = useMemo<MapState>(() => {
-    const car = status && from && to ? driverPosition(status, from, to, progress) : null;
-    const ahead = status && from && to ? driverPosition(status, from, to, Math.min(progress + 0.05, 1)) : null;
+    const trip = pickup && destination && from && to ? ([pickup, destination] as const) : null;
+    const car = status && trip ? driverPosition(status, trip[0], trip[1], progress) : null;
+    const ahead = status && trip ? driverPosition(status, trip[0], trip[1], Math.min(progress + 0.05, 1)) : null;
     const heading = car && ahead && (car.latitude !== ahead.latitude || car.longitude !== ahead.longitude) ? bearing(car, ahead) : 0;
     return {
       areas: showAreas ? SERVICE_AREAS.filter((a) => a !== pickup && a !== destination).map((name) => ({ name, ...AREA_COORDS[name] })) : [],
       pickup: from && pickup ? { name: pickup, ...from } : undefined,
       destination: to && destination ? { name: destination, ...to } : undefined,
-      route: from && to ? routePath(from, to).map((p) => [p.latitude, p.longitude] as [number, number]) : [],
+      route: trip ? routeBetween(trip[0], trip[1]).map((p) => [p.latitude, p.longitude] as [number, number]) : [],
       car: car ? { ...car, heading } : undefined,
       me,
     };

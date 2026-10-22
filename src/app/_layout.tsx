@@ -44,6 +44,7 @@ function Root() {
         <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
         <Stack.Screen name="(rider)" options={{ animation: 'fade' }} />
         <Stack.Screen name="driver" options={{ animation: 'fade' }} />
+        <Stack.Screen name="demo" />
       </Stack>
     </>
   );

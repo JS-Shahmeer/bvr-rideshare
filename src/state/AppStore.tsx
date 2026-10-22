@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
+import { demoBookings, demoNotifications, type DemoScenario } from '@/data/demo';
 import { DEFAULT_SETTINGS, DEMO_ACCOUNTS, defaultDraft, seedBookings, seedNotifications } from '@/data/seed';
 import type {
   Account,
@@ -30,6 +31,8 @@ interface PersistedState {
   bookings: Booking[];
   notifications: AppNotification[];
   draft: BookingDraft;
+  /** Client demo: shows the stage controls on ride screens. */
+  demoMode: boolean;
 }
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -55,6 +58,10 @@ interface Store extends PersistedState {
   updateSettings(patch: Partial<FareSettings>): void;
   markNotificationsRead(role: Role): void;
   resetDemo(): void;
+  /** Signs in both demo accounts and sets the app up at a scenario. */
+  startDemo(scenario: DemoScenario): void;
+  /** Demo only: puts a ride straight into any status. */
+  setRideStatus(id: string, status: BookingStatus): void;
 }
 
 const STORAGE_KEY = 'bvr.app-state.v1';
@@ -69,6 +76,7 @@ function initialState(): PersistedState {
     bookings: seedBookings(),
     notifications: seedNotifications(),
     draft: defaultDraft(),
+    demoMode: false,
   };
 }
 
@@ -333,6 +341,36 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
       resetDemo() {
         commit(() => initialState());
+      },
+
+      startDemo({ role, ride, driverOnline = true }) {
+        const strip = ({ password: _pw, ...a }: Account & { password: string }): Account => a;
+        const rider = strip(DEMO_ACCOUNTS.rider);
+        commit(() => ({
+          ...initialState(),
+          sessions: { rider, driver: strip(DEMO_ACCOUNTS.driver) },
+          activeRole: role,
+          driverOnline,
+          bookings: demoBookings(ride),
+          notifications: demoNotifications(ride),
+          draft: defaultDraft(rider.name, rider.phone),
+          demoMode: true,
+        }));
+      },
+
+      setRideStatus(id, status) {
+        const b = find(id);
+        if (!b || b.status === status) return;
+        const { cancellationEnabled, cancellationFee } = ref.current.settings;
+        commit((s) => ({
+          ...s,
+          bookings: patchBooking(s, id, {
+            status,
+            completedAt: status === 'completed' ? new Date().toISOString() : undefined,
+            cancellationCharge: status === 'cancelled' && cancellationEnabled ? cancellationFee : 0,
+          }),
+          notifications: notify(s, 'rider', STATUS_INFO[status].label, `Booking ${id} is now: ${STATUS_INFO[status].label.toLowerCase()}.`),
+        }));
       },
     };
   }, [state, ready, commit]);

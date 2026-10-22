@@ -83,8 +83,9 @@ export default function DriverSettings() {
 
       <Notice style={{ marginTop: 20 }}>Final rates, fees and the cancellation policy should be confirmed against current NSW point-to-point rules before launch.</Notice>
 
+      <Button style={{ marginTop: 20 }} variant="outline" icon="eye" label="Client demo scenarios" onPress={() => router.push('/demo')} />
       <Button
-        style={{ marginTop: 20 }}
+        style={{ marginTop: 10 }}
         variant="outline"
         icon="user"
         label="Switch to rider view"
