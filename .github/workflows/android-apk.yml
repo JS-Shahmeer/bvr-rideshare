@@ -1,0 +1,74 @@
+name: Android APK
+
+# Builds an installable APK for client previews and attaches it to a GitHub
+# release. Runs on pushes to ui-module/main, or by hand from the Actions tab.
+on:
+  push:
+    branches: [ui-module, main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - run: npm ci
+
+      - name: Checks
+        run: |
+          npm run typecheck
+          npm test
+
+      - name: Generate the native Android project
+        run: npx expo prebuild --platform android --no-install --clean
+        env:
+          EXPO_NO_TELEMETRY: 1
+
+      - name: Build release APK
+        working-directory: android
+        # The Expo template signs release builds with the debug keystore, which
+        # is fine for sideloaded previews. Play Store builds use EAS with a real key.
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Name the APK
+        id: apk
+        run: |
+          name="BVR-Rideshare-preview-${GITHUB_RUN_NUMBER}.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bvr-rideshare-apk
+          path: ${{ steps.apk.outputs.name }}
+
+      - name: Publish as a pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="preview-${GITHUB_RUN_NUMBER}"
+          gh release create "$tag" "${{ steps.apk.outputs.name }}" \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "Preview build ${GITHUB_RUN_NUMBER} (${GITHUB_REF_NAME})" \
+            --notes "Android preview of the BVR Rideshare UI (mock data). Install on an Android phone: download the APK, open it, and allow installs from this source. Sign in with the demo logins or open Client demo from the sign-in screen."
