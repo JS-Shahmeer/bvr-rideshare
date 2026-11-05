@@ -31,6 +31,7 @@ export function AuthScreen({ mode, role: initialRole }: { mode: 'signin' | 'sign
   const [busy, setBusy] = useState(false);
 
   const owner = role === 'driver';
+  const live = store.mode === 'live';
   const signup = mode === 'signup';
 
   const switchRole = (r: Role) => {
@@ -101,14 +102,17 @@ export function AuthScreen({ mode, role: initialRole }: { mode: 'signin' | 'sign
             {sub}
           </Text>
 
-          <Segmented
-            value={mode}
-            onChange={goMode}
-            options={[
-              { value: 'signin', label: 'Sign in' },
-              { value: 'signup', label: owner ? 'Owner setup' : 'Sign up' },
-            ]}
-          />
+          {/* In live mode the owner account is created by BVR, so owners only sign in. */}
+          {owner && live ? null : (
+            <Segmented
+              value={mode}
+              onChange={goMode}
+              options={[
+                { value: 'signin', label: 'Sign in' },
+                { value: 'signup', label: owner ? 'Owner setup' : 'Sign up' },
+              ]}
+            />
+          )}
 
           {signup ? (
             <Field label="Full name">
@@ -155,7 +159,12 @@ export function AuthScreen({ mode, role: initialRole }: { mode: 'signin' | 'sign
               <Input icon="lock" value={confirm} onChangeText={setConfirm} placeholder="Repeat your password" secureTextEntry={!showPw} autoCapitalize="none" />
             </Field>
           ) : (
-            <Pressable onPress={() => toast('Password reset arrives with secure sign-in in the next module.')} style={styles.forgot}>
+            <Pressable onPress={async () => {
+                const r = await store.resetPassword(email);
+                if (!r.ok) return setError(r.error);
+                setError('');
+                toast('Check your email for a link to reset your password.');
+              }} style={styles.forgot}>
               <RNText style={styles.link}>Forgot password?</RNText>
             </Pressable>
           )}
@@ -184,7 +193,7 @@ export function AuthScreen({ mode, role: initialRole }: { mode: 'signin' | 'sign
             onPress={submit}
           />
 
-          {!signup ? (
+          {!signup && !live ? (
             <>
               <View style={styles.divider}>
                 <View style={styles.rule} />

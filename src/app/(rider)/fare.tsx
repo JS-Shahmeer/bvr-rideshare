@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { FareBreakdownList, RouteStops } from '@/components/Booking';
@@ -18,8 +19,12 @@ export default function FareAndPayment() {
   const toast = useToast();
   const fare = fareEstimate(draft.pickup, draft.destination, settings);
 
-  const request = () => {
-    const r = submitBooking();
+  const [busy, setBusy] = useState(false);
+  const request = async () => {
+    if (busy) return;
+    setBusy(true);
+    const r = await submitBooking();
+    setBusy(false);
     if (!r.ok) return toast(r.error);
     toast('Ride request sent to Robert.');
     router.dismissTo('/home');
@@ -57,7 +62,7 @@ export default function FareAndPayment() {
         Rates: {money(settings.kmRate)}/km and {money(settings.minRate)}/min, plus the NSW point-to-point, CTP and administration fees. Final fare is
         confirmed by your driver.
       </Text>
-      <Button label="Request my ride" trailingIcon="arrow" onPress={request} />
+      <Button label={busy ? "Sending request…" : "Request my ride"} trailingIcon="arrow" loading={busy} onPress={request} />
     </Screen>
   );
 }

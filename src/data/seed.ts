@@ -10,8 +10,8 @@ export const DEFAULT_SETTINGS: FareSettings = {
 
 /** Demo logins shown on the sign-in screen until Supabase auth lands in module 2. */
 export const DEMO_ACCOUNTS: Record<Role, Account & { password: string }> = {
-  rider: { role: 'rider', name: 'Alex Morgan', email: 'rider@bvr.demo', phone: '0400 123 456', password: 'BVRdemo123' },
-  driver: { role: 'driver', name: 'Robert Burns', email: 'robert@bvr.demo', phone: '0400 987 654', password: 'BVRdemo123' },
+  rider: { id: 'rider@bvr.demo', role: 'rider', name: 'Alex Morgan', email: 'rider@bvr.demo', phone: '0400 123 456', password: 'BVRdemo123' },
+  driver: { id: 'robert@bvr.demo', role: 'driver', name: 'Robert Burns', email: 'robert@bvr.demo', phone: '0400 987 654', password: 'BVRdemo123' },
 };
 
 export function defaultDraft(name = '', phone = ''): BookingDraft {

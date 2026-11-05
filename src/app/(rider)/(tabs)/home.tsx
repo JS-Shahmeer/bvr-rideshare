@@ -17,7 +17,7 @@ import { colors, fonts } from '@/theme';
 export default function RiderHome() {
   const { draft, updateDraft, bookings, sessions } = useStore();
   const toast = useToast();
-  const active = bookings.find((b) => b.riderId === sessions.rider?.email && OPEN_STATUSES.includes(b.status));
+  const active = bookings.find((b) => b.riderId === sessions.rider?.id && OPEN_STATUSES.includes(b.status));
 
   const next = () => {
     if (draft.pickup === draft.destination) return toast('Pickup and destination must be different.');

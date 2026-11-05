@@ -6,8 +6,8 @@ Cross-platform (iOS, Android, web) ride booking app for BVR Rideshare, Robert Bu
 
 | Module | Scope | Status |
 | --- | --- | --- |
-| 1. UI | Every screen for riders and the driver, running on on-device mock data | **This repo, now** |
-| 2. Backend | Supabase auth and database, Stripe card payments plus cash, push notifications, live trip status | Next |
+| 1. UI | Every screen for riders and the driver, running on on-device mock data | Done |
+| 2. Backend | Supabase auth and database, Stripe card payments plus cash, push notifications, live trip status | **In progress** |
 | 3. Testing and release | Logic and end-to-end tests, device testing, TestFlight and Play internal builds | After module 2 |
 
 ## Run it
@@ -60,16 +60,24 @@ Screens only read and write through `src/state/AppStore.tsx`. In module 2 each s
 ```bash
 npm run typecheck
 npm test
+./scripts/test-db.sh   # database rules on a local Postgres
 ```
 
-## Placeholders to replace in module 2
+## Demo mode and live mode
 
-- Mock sign-in and accounts → Supabase Auth
-- Route distances between the four towns → routing API with real addresses
-- Simulated driver position on the map (`src/lib/geo.ts`) → driver's live GPS; curved route line → routing provider polyline
-- Map tiles from OpenStreetMap's free tile server (Esri fallback) (`src/components/map/mapHtml.ts`) → a keyed tile provider for production traffic
-- Online payment option → Stripe (cards, Apple Pay, Google Pay)
-- In-app notifications → push notifications
+Without Supabase settings the app runs in **demo mode** on on-device data, with the Client demo hub. Given `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` it runs in **live mode**: real accounts, shared bookings with realtime updates, card payments, push notifications and the driver's GPS on the map. Setup steps: [supabase/README.md](supabase/README.md).
+
+| Area | Where |
+| --- | --- |
+| Database, security rules, ride actions | `supabase/migrations/` (tested by `scripts/test-db.sh`) |
+| Card charges and push sending | `supabase/functions/` |
+| App data in live mode | `src/state/LiveStore.tsx` (demo mode: `src/state/MockStore.tsx`) |
+
+## Still to come
+
+- Real street addresses and routing (currently the four service-area towns), which needs a maps provider key
+- Street-level map tiles (set `EXPO_PUBLIC_MAP_TILE_URL`)
+- Final fare rates and cancellation policy from the client
 
 ## Screenshots
 

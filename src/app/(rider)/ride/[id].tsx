@@ -13,8 +13,8 @@ import { Text } from '@/components/Text';
 import { CancelSheet, ChangeDestinationSheet, TripDetailsSheet } from '@/components/TripSheets';
 import type { BookingStatus } from '@/data/types';
 import { money } from '@/lib/fare';
-import { OPEN_STATUSES, STATUS_INFO, whenLabel } from '@/lib/format';
-import { useBooking } from '@/state/AppStore';
+import { ACTIVE_STATUSES, OPEN_STATUSES, STATUS_INFO, whenLabel } from '@/lib/format';
+import { useBooking, useStore } from '@/state/AppStore';
 import { colors, fonts } from '@/theme';
 
 const ORDER: BookingStatus[] = ['requested', 'accepted', 'enroute', 'arrived', 'inprogress', 'completed'];
@@ -28,6 +28,7 @@ const STEPS: [string, BookingStatus][] = [
 export default function RideStatus() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const b = useBooking(id);
+  const { mode, driverLocation } = useStore();
   const [sheet, setSheet] = useState<'cancel' | 'change' | 'receipt' | null>(null);
 
   if (!b) {
@@ -82,7 +83,11 @@ export default function RideStatus() {
 
       <LiveMap height={260} label={open ? 'Live trip' : 'Trip route'} pickup={b.pickup} destination={b.destination} status={b.status} />
       <Text variant="tiny" style={{ marginTop: 7, marginBottom: 16 }}>
-        Driver position is simulated until live GPS arrives with the backend module.
+        {mode === 'demo'
+          ? 'Demo mode: the driver’s position is simulated.'
+          : ACTIVE_STATUSES.includes(b.status) && !driverLocation
+            ? 'Robert’s location appears here once he starts driving.'
+            : ' '}
       </Text>
 
       <Card>

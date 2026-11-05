@@ -58,9 +58,10 @@ export default function DriverNavigate() {
     );
   }
 
-  const advance = () => {
-    const next = advanceRide(b.id);
-    if (next === 'completed') setDone(b.id);
+  const advance = async () => {
+    const r = await advanceRide(b.id);
+    if (!r.ok) toast(r.error);
+    else if (r.status === 'completed') setDone(b.id);
     else toast('Ride status updated. Rider notified.');
   };
 

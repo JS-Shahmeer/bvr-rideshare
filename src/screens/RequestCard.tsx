@@ -19,15 +19,15 @@ export function useRequestActions() {
   const { acceptBooking, declineBooking } = useStore();
   const toast = useToast();
   return {
-    accept(id: string) {
-      const r = acceptBooking(id);
+    async accept(id: string) {
+      const r = await acceptBooking(id);
       if (!r.ok) return toast(r.error);
       toast('Booking accepted. Rider notified.');
       router.navigate({ pathname: '/driver/navigate', params: { id } });
     },
-    decline(id: string) {
-      declineBooking(id);
-      toast('Request declined.');
+    async decline(id: string) {
+      const r = await declineBooking(id);
+      toast(r.ok ? 'Request declined.' : r.error);
     },
   };
 }

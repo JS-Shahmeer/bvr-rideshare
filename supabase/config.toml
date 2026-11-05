@@ -1,0 +1,8 @@
+# Edge function settings for `supabase functions deploy`.
+# Webhook targets check their own secret instead of a user JWT.
+
+[functions.booking-events]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false

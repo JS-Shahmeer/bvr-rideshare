@@ -16,7 +16,7 @@ export default function MyRides() {
   const [filter, setFilter] = useState<Filter>('upcoming');
   const [detailId, setDetailId] = useState<string | null>(null);
 
-  const mine = bookings.filter((b) => b.riderId === sessions.rider?.email);
+  const mine = bookings.filter((b) => b.riderId === sessions.rider?.id);
   const list = mine
     .filter((b) =>
       filter === 'upcoming' ? OPEN_STATUSES.includes(b.status) : filter === 'completed' ? b.status === 'completed' : ['cancelled', 'declined'].includes(b.status),

@@ -42,6 +42,8 @@ export interface Booking {
   status: BookingStatus;
   createdAt: string;
   completedAt?: string;
+  /** Card payment progress; demo mode leaves it unset. */
+  paymentState?: 'none' | 'card_saved' | 'processing' | 'paid' | 'failed';
   fare: FareBreakdown;
   cancellationCharge: number;
   rating: number;
@@ -64,6 +66,8 @@ export interface FareSettings {
 }
 
 export interface Account {
+  /** Stable user id: the Supabase user id, or the email in demo mode. */
+  id: string;
   role: Role;
   name: string;
   email: string;
@@ -79,4 +83,12 @@ export interface BookingDraft {
   payment: PaymentMethod;
   name: string;
   phone: string;
+}
+
+/** Driver's last reported position (live mode only). */
+export interface DriverLocation {
+  latitude: number;
+  longitude: number;
+  heading: number | null;
+  updatedAt: string;
 }

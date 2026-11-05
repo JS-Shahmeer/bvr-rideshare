@@ -38,3 +38,18 @@ language sql security definer set search_path = public as $$
 $$;
 revoke execute on function public.register_push_token(text, text) from public, anon;
 grant execute on function public.register_push_token(text, text) to authenticated;
+
+-- Tells the rider and Robert when a saved card could not be charged.
+create function public.notify_payment_failed(p_id text) returns void
+language plpgsql security definer set search_path = public as $$
+declare b bookings;
+begin
+  select * into b from bookings where id = p_id;
+  if not found then return; end if;
+  perform notify_user(b.rider_id, 'rider', 'Payment failed',
+    format('We could not charge your card for %s. Please pay Robert directly.', b.id), b.id);
+  perform notify_driver('Card payment failed', format('The card payment for %s did not go through. Collect payment from %s.', b.id, b.name), b.id);
+end;
+$$;
+revoke execute on function public.notify_payment_failed(text) from public, anon, authenticated;
+grant execute on function public.notify_payment_failed(text) to service_role;
