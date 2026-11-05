@@ -4,7 +4,7 @@ name: Android APK
 # release. Runs on pushes to ui-module/main, or by hand from the Actions tab.
 on:
   push:
-    branches: [ui-module, main]
+    branches: [ui-module, backend-module, main]
   workflow_dispatch:
 
 permissions:
@@ -39,11 +39,19 @@ jobs:
         run: |
           npm run typecheck
           npm test
+          ./scripts/test-db.sh
 
       - name: Generate the native Android project
         run: npx expo prebuild --platform android --no-install --clean
         env:
           EXPO_NO_TELEMETRY: 1
+
+      # With these repository variables set, the APK talks to Supabase (live
+      # mode). Without them it runs on demo data, as the client previews do.
+      - name: Point the build at Supabase
+        run: |
+          echo "EXPO_PUBLIC_SUPABASE_URL=${{ vars.EXPO_PUBLIC_SUPABASE_URL }}" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ vars.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" >> "$GITHUB_ENV"
 
       - name: Build release APK
         working-directory: android

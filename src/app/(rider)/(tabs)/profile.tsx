@@ -16,7 +16,7 @@ import { useStore } from '@/state/AppStore';
 import { colors, fonts } from '@/theme';
 
 export default function Account() {
-  const { sessions, settings, updateProfile, signOut, setActiveRole } = useStore();
+  const { mode, sessions, settings, updateProfile, signOut, setActiveRole } = useStore();
   const toast = useToast();
   const me = sessions.rider;
   const [name, setName] = useState(me?.name ?? '');
@@ -50,9 +50,9 @@ export default function Account() {
         <Button
           style={{ marginTop: 17 }}
           label="Save profile"
-          onPress={() => {
-            updateProfile({ name, phone });
-            toast('Profile saved.');
+          onPress={async () => {
+            const r = await updateProfile({ name, phone });
+            toast(r.ok ? 'Profile saved.' : r.error);
           }}
         />
       </Card>
@@ -61,15 +61,17 @@ export default function Account() {
         <MenuRow icon="history" label="My ride history" onPress={() => router.navigate('/trips')} />
         <MenuRow icon="bell" label="Notifications" onPress={() => router.navigate('/notifications')} />
         <MenuRow icon="shield" label="Fees & cancellation info" onPress={() => setPolicy(true)} />
-        <MenuRow icon="eye" label="Client demo scenarios" onPress={() => router.push('/demo')} />
-        <MenuRow
-          icon="car"
-          label="Switch to driver view"
-          onPress={() => {
-            setActiveRole('driver');
-            router.replace(sessions.driver ? '/driver' : { pathname: '/sign-in', params: { role: 'driver' } });
-          }}
-        />
+        {mode === 'demo' ? <MenuRow icon="eye" label="Client demo scenarios" onPress={() => router.push('/demo')} /> : null}
+        {mode === 'demo' ? (
+          <MenuRow
+            icon="car"
+            label="Switch to driver view"
+            onPress={() => {
+              setActiveRole('driver');
+              router.replace(sessions.driver ? '/driver' : { pathname: '/sign-in', params: { role: 'driver' } });
+            }}
+          />
+        ) : null}
       </View>
 
       <Button

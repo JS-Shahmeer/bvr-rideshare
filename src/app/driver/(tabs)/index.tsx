@@ -35,7 +35,10 @@ export default function DriverDashboard() {
         <View style={styles.avail}>
           <View style={[styles.dot, { backgroundColor: driverOnline ? '#7FF0B8' : '#FFCA89' }]} />
           <RNText style={styles.availText}>{driverOnline ? 'You’re available' : 'You’re offline'}</RNText>
-          <Toggle label="Toggle availability" value={driverOnline} onChange={() => toast(toggleOnline() ? 'You are now available.' : 'Availability switched off.')} />
+          <Toggle label="Toggle availability" value={driverOnline} onChange={async () => {
+              const r = await toggleOnline();
+              toast(!r.ok ? r.error : r.online ? 'You are now available.' : 'Availability switched off.');
+            }} />
         </View>
       </LinearGradient>
 

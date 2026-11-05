@@ -17,7 +17,7 @@ function parseRate(v: string, max: number): number | null {
 }
 
 export default function DriverSettings() {
-  const { settings, updateSettings, driverOnline, toggleOnline, signOut, setActiveRole, sessions } = useStore();
+  const { mode, settings, updateSettings, driverOnline, toggleOnline, signOut, setActiveRole, sessions } = useStore();
   const toast = useToast();
   const [km, setKm] = useState(String(settings.kmRate));
   const [min, setMin] = useState(String(settings.minRate));
@@ -28,8 +28,7 @@ export default function DriverSettings() {
     const minRate = parseRate(min, 99);
     const cancellationFee = parseRate(fee, 500);
     if (kmRate === null || minRate === null || cancellationFee === null) return toast('Enter valid, non-negative amounts.');
-    updateSettings({ kmRate, minRate, cancellationFee });
-    toast('Fare settings saved.');
+    updateSettings({ kmRate, minRate, cancellationFee }).then((r) => toast(r.ok ? 'Fare settings saved.' : r.error));
   };
 
   return (
@@ -44,7 +43,7 @@ export default function DriverSettings() {
               {driverOnline ? 'Riders can request trips now' : 'New requests are paused'}
             </Text>
           </View>
-          <Toggle label="Taking bookings" value={driverOnline} onChange={toggleOnline} />
+          <Toggle label="Taking bookings" value={driverOnline} onChange={() => toggleOnline().then((r) => !r.ok && toast(r.error))} />
         </View>
       </Card>
 
@@ -70,7 +69,7 @@ export default function DriverSettings() {
       <TitleRow
         title="Cancellation fee"
         style={{ marginTop: 24 }}
-        right={<Toggle label="Cancellation fee" value={settings.cancellationEnabled} onChange={() => updateSettings({ cancellationEnabled: !settings.cancellationEnabled })} />}
+        right={<Toggle label="Cancellation fee" value={settings.cancellationEnabled} onChange={() => updateSettings({ cancellationEnabled: !settings.cancellationEnabled }).then((r) => !r.ok && toast(r.error))} />}
       />
       <Text variant="subhead" style={{ marginTop: 6 }}>
         Charged when a rider cancels after you have accepted the ride.
@@ -83,17 +82,19 @@ export default function DriverSettings() {
 
       <Notice style={{ marginTop: 20 }}>Final rates, fees and the cancellation policy should be confirmed against current NSW point-to-point rules before launch.</Notice>
 
-      <Button style={{ marginTop: 20 }} variant="outline" icon="eye" label="Client demo scenarios" onPress={() => router.push('/demo')} />
-      <Button
-        style={{ marginTop: 10 }}
-        variant="outline"
-        icon="user"
-        label="Switch to rider view"
-        onPress={() => {
-          setActiveRole('rider');
-          router.replace(sessions.rider ? '/home' : { pathname: '/sign-in', params: { role: 'rider' } });
-        }}
-      />
+      {mode === 'demo' ? <Button style={{ marginTop: 20 }} variant="outline" icon="eye" label="Client demo scenarios" onPress={() => router.push('/demo')} /> : null}
+      {mode === 'demo' ? (
+        <Button
+          style={{ marginTop: 10 }}
+          variant="outline"
+          icon="user"
+          label="Switch to rider view"
+          onPress={() => {
+            setActiveRole('rider');
+            router.replace(sessions.rider ? '/home' : { pathname: '/sign-in', params: { role: 'rider' } });
+          }}
+        />
+      ) : null}
       <Button
         style={{ marginTop: 10 }}
         variant="danger"

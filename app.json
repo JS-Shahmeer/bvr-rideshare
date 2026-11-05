@@ -40,6 +40,19 @@
         {
           "locationWhenInUsePermission": "BVR Rideshare uses your location to show where you are on the map and set your pickup."
         }
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.au.com.bvrrideshare",
+          "enableGooglePay": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#0868B5"
+        }
       ]
     ],
     "experiments": {

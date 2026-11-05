@@ -5,6 +5,7 @@ import type { Booking, ServiceArea } from '@/data/types';
 import { money } from '@/lib/fare';
 import { ACTIVE_STATUSES, STATUS_INFO } from '@/lib/format';
 import { useStore } from '@/state/AppStore';
+import { colors } from '@/theme';
 
 import { FareBreakdownList, RouteStops } from './Booking';
 import { Button } from './Button';
@@ -32,9 +33,10 @@ export function CancelSheet({ booking, visible, onClose, onCancelled }: { bookin
           style={{ flex: 1 }}
           variant="danger"
           label="Cancel ride"
-          onPress={() => {
-            cancelRide(booking.id);
+          onPress={async () => {
+            const r = await cancelRide(booking.id);
             onClose();
+            if (!r.ok) return toast(r.error);
             toast('Booking cancelled. Robert has been notified.');
             onCancelled();
           }}
@@ -60,8 +62,8 @@ export function ChangeDestinationSheet({ booking, visible, onClose }: { booking:
       <Notice style={{ marginVertical: 14 }}>Robert will get a notification about the new destination.</Notice>
       <Button
         label="Save new destination"
-        onPress={() => {
-          const r = changeDestination(booking.id, dest);
+        onPress={async () => {
+          const r = await changeDestination(booking.id, dest);
           if (!r.ok) return toast(r.error);
           onClose();
           if (dest !== booking.destination) toast('Destination updated. Robert has been notified.');
@@ -90,6 +92,11 @@ export function TripDetailsSheet({ booking, visible, onClose, canRate }: { booki
       <Text variant="tiny" style={{ marginTop: 10 }}>
         Paid by {booking.payment === 'card' ? 'online payment' : 'cash to driver'} · {booking.passengers} passenger{booking.passengers > 1 ? 's' : ''}
       </Text>
+      {booking.payment === 'card' && booking.paymentState && booking.paymentState !== 'none' ? (
+        <Text variant="tiny" style={{ marginTop: 4, color: booking.paymentState === 'failed' ? '#CE4356' : colors.muted }}>
+          {PAYMENT_LABEL[booking.paymentState]}
+        </Text>
+      ) : null}
       {completed && canRate ? (
         <View style={{ alignItems: 'center', marginTop: 20 }}>
           <Text variant="bodyBold">How was your ride?</Text>
@@ -100,9 +107,9 @@ export function TripDetailsSheet({ booking, visible, onClose, canRate }: { booki
                 hitSlop={4}
                 accessibilityRole="button"
                 accessibilityLabel={`${n} star${n > 1 ? 's' : ''}`}
-                onPress={() => {
-                  rateRide(booking.id, n);
-                  toast('Thanks for rating your trip!');
+                onPress={async () => {
+                  const r = await rateRide(booking.id, n);
+                  toast(r.ok ? 'Thanks for rating your trip!' : r.error);
                 }}>
                 <Icon name="star" size={30} color={n <= booking.rating ? '#F2A93B' : '#C7D3DE'} fill={n <= booking.rating ? '#F2A93B' : 'none'} />
               </Pressable>
@@ -115,6 +122,13 @@ export function TripDetailsSheet({ booking, visible, onClose, canRate }: { booki
     </Sheet>
   );
 }
+
+const PAYMENT_LABEL = {
+  card_saved: 'Card saved. It is charged when the trip ends.',
+  processing: 'Card payment processing…',
+  paid: 'Card charged.',
+  failed: 'Card payment failed. Please pay Robert directly.',
+} as const;
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 10 },

@@ -4,7 +4,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { BookingStatus, ServiceArea } from '@/data/types';
 import { SERVICE_AREAS } from '@/lib/fare';
+import { ACTIVE_STATUSES } from '@/lib/format';
 import { AREA_COORDS, bearing, driverPosition, routeBetween, type LatLng } from '@/lib/geo';
+import { useStore } from '@/state/AppStore';
 import { colors, fonts, shadows } from '@/theme';
 
 import { Icon } from './Icon';
@@ -29,6 +31,7 @@ export type LiveMapProps = {
 const MOVING: BookingStatus[] = ['enroute', 'inprogress'];
 
 export function LiveMap({ height = 220, pickup, destination, status, showAreas, onAreaPress, locate, label = 'Live map', footer }: LiveMapProps) {
+  const { mode, driverLocation } = useStore();
   const surface = useRef<MapSurfaceHandle>(null);
   const [ready, setReady] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -38,7 +41,7 @@ export function LiveMap({ height = 220, pickup, destination, status, showAreas, 
   const to = destination && destination !== pickup ? AREA_COORDS[destination] : undefined;
 
   // Simulated movement along the current leg until module 2 streams live GPS.
-  const moving = !!status && MOVING.includes(status);
+  const moving = mode === 'demo' && !!status && MOVING.includes(status);
   useEffect(() => {
     setProgress(0);
     if (!moving) return;
@@ -48,9 +51,20 @@ export function LiveMap({ height = 220, pickup, destination, status, showAreas, 
 
   const state = useMemo<MapState>(() => {
     const trip = pickup && destination && from && to ? ([pickup, destination] as const) : null;
-    const car = status && trip ? driverPosition(status, trip[0], trip[1], progress) : null;
-    const ahead = status && trip ? driverPosition(status, trip[0], trip[1], Math.min(progress + 0.05, 1)) : null;
-    const heading = car && ahead && (car.latitude !== ahead.latitude || car.longitude !== ahead.longitude) ? bearing(car, ahead) : 0;
+    let car: LatLng | null = null;
+    let heading = 0;
+    if (mode === 'live') {
+      // Live: the driver's reported GPS position, while the trip is under way.
+      if (status && ACTIVE_STATUSES.includes(status) && driverLocation) {
+        car = { latitude: driverLocation.latitude, longitude: driverLocation.longitude };
+        heading = driverLocation.heading ?? 0;
+      }
+    } else if (status && trip) {
+      // Demo: a simulated car moving along the current leg.
+      car = driverPosition(status, trip[0], trip[1], progress);
+      const ahead = driverPosition(status, trip[0], trip[1], Math.min(progress + 0.05, 1));
+      if (car && ahead && (car.latitude !== ahead.latitude || car.longitude !== ahead.longitude)) heading = bearing(car, ahead);
+    }
     return {
       areas: showAreas ? SERVICE_AREAS.filter((a) => a !== pickup && a !== destination).map((name) => ({ name, ...AREA_COORDS[name] })) : [],
       pickup: from && pickup ? { name: pickup, ...from } : undefined,
@@ -59,7 +73,7 @@ export function LiveMap({ height = 220, pickup, destination, status, showAreas, 
       car: car ? { ...car, heading } : undefined,
       me,
     };
-  }, [showAreas, pickup, destination, from, to, status, progress, me]);
+  }, [showAreas, pickup, destination, from, to, status, progress, me, mode, driverLocation]);
 
   // Re-frame when the trip itself changes, not on every tick of the car.
   const tripKey = `${pickup}|${destination}|${status}`;
